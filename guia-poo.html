@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de POO — Encapsulamento, Herança e Relações entre Objetos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #000000;
+    --bg-raise: #0a0a0b;
+    --panel: #0e0e10;
+    --panel-2: #141416;
+    --grid: #131315;
+    --line: #262629;
+    --line-soft: #1a1a1c;
+    --ink: #f3f3f3;
+    --ink-dim: #a7a7ad;
+    --ink-faint: #6a6a70;
+    --gold: #f2ac4f;
+    --gold-dim: #6b4c22;
+    --teal: #63d2b6;
+    --blue: #7fabe4;
+    --coral: #e3846f;
+    --violet: #a48ce0;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --head: 'Space Grotesk', sans-serif;
+    --body: 'IBM Plex Sans', sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#000000; --panel:#0e0e10; --ink:#f3f3f3; }
+  }
+  :root[data-theme="dark"]{ --bg:#000000; --panel:#0e0e10; --ink:#f3f3f3; }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(242,172,79,0.06), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(127,171,228,0.05), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    line-height:1.65;
+    position:relative;
+  }
+  body::before{
+    content:'';
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse 1200px 900px at 50% 0%, #000 40%, transparent 85%);
+    mask-image: radial-gradient(ellipse 1200px 900px at 50% 0%, #000 40%, transparent 85%);
+  }
+  a{color:var(--blue);}
+  ::selection{ background:var(--gold-dim); color:#fff; }
+
+  /* progress bar */
+  #progress{
+    position:fixed; top:0; left:0; height:2px; width:0%;
+    background:linear-gradient(90deg, var(--gold), var(--teal));
+    z-index:50; transition:width .08s linear;
+  }
+
+  .wrap{
+    max-width:1180px; margin:0 auto; padding: 0 24px 140px;
+    display:grid; grid-template-columns: 250px minmax(0,1fr); gap:48px;
+    position:relative; z-index:1;
+  }
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    padding: 70px 24px 44px; max-width:1180px; margin:0 auto;
+    position:relative; z-index:1; border-bottom:1px solid var(--line-soft);
+  }
+  .hero-inner{ display:grid; grid-template-columns: 1.15fr 0.85fr; gap:40px; align-items:center; }
+  @media (max-width: 880px){ .hero-inner{ grid-template-columns:1fr; } }
+  .kicker{ font-family:var(--mono); font-size:0.8rem; color:var(--gold); letter-spacing:0.02em; margin:0 0 14px; display:flex; align-items:center; gap:10px;}
+  .kicker::before{ content:''; width:16px; height:1px; background:var(--gold); display:inline-block; }
+  h1.title{
+    font-family:var(--head); font-size: clamp(2.1rem, 4.4vw, 3.5rem);
+    line-height:1.07; margin:0 0 20px; font-weight:700; letter-spacing:-0.01em;
+  }
+  h1.title em{ font-style:normal; color:var(--gold); }
+  .hero p.lede{ color:var(--ink-dim); font-size:1.08rem; max-width:46ch; margin:0 0 26px; }
+  .hero-meta{ display:flex; gap:22px; flex-wrap:wrap; font-family:var(--mono); font-size:0.82rem; color:var(--ink-faint); }
+  .hero-meta strong{ color:var(--ink); font-weight:600; }
+
+  .diagram-card{
+    background:linear-gradient(180deg, var(--panel), var(--bg-raise));
+    border:1px solid var(--line); border-radius:8px; padding:24px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 30px 60px -30px rgba(0,0,0,0.9);
+  }
+  .diagram-card svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .diagram-caption{ font-family:var(--mono); font-size:0.72rem; color:var(--ink-faint); margin-top:14px; text-align:center; }
+
+  .draw-line{ stroke-dasharray:120; stroke-dashoffset:120; animation:draw 1.1s ease forwards; }
+  .draw-line.d1{ animation-delay:.15s; }
+  .draw-line.d2{ animation-delay:.5s; }
+  .draw-line.d3{ animation-delay:.85s; }
+  .fade-in{ opacity:0; animation:fadeIn .5s ease forwards; }
+  .fade-in.f1{ animation-delay:.5s; }
+  .fade-in.f2{ animation-delay:.85s; }
+  .fade-in.f3{ animation-delay:1.2s; }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+  @keyframes fadeIn{ to{ opacity:1; } }
+  @media (prefers-reduced-motion: reduce){
+    .draw-line{ stroke-dasharray:none; stroke-dashoffset:0; animation:none; }
+    .fade-in{ opacity:1; animation:none; }
+  }
+
+  /* ---------- LAYOUT ---------- */
+  nav.toc{ position:sticky; top:24px; align-self:start; padding-top:8px; }
+  nav.toc .toc-label{ font-family:var(--mono); font-size:0.72rem; color:var(--ink-faint); margin-bottom:14px; }
+  nav.toc ol{ list-style:none; margin:0; padding:0; counter-reset:toc; }
+  nav.toc li{ counter-increment:toc; margin-bottom:2px; }
+  nav.toc a{
+    display:flex; gap:10px; align-items:baseline; text-decoration:none; color:var(--ink-dim);
+    font-size:0.92rem; padding:8px 6px; border-left:2px solid transparent; transition:border-color .15s, color .15s;
+  }
+  nav.toc a::before{ content: counter(toc, decimal-leading-zero); font-family:var(--mono); font-size:0.76rem; color:var(--ink-faint); }
+  nav.toc a:hover{ color:var(--ink); border-left-color:var(--gold-dim); }
+  nav.toc a.active{ color:var(--gold); border-left-color:var(--gold); }
+  nav.toc .toc-stat{
+    margin-top:26px; padding-top:18px; border-top:1px solid var(--line-soft);
+    font-family:var(--mono); font-size:0.72rem; color:var(--ink-faint); line-height:1.9;
+  }
+  nav.toc .toc-stat b{ color:var(--ink); }
+
+  main{ min-width:0; }
+  section.block{ margin-bottom:84px; scroll-margin-top:24px; }
+  section.block .num{ font-family:var(--mono); color:var(--gold); font-size:0.85rem; }
+  section.block h2{ font-family:var(--head); font-size:1.95rem; margin:6px 0 18px; font-weight:600; letter-spacing:-0.005em; }
+  section.block h3{ font-family:var(--head); font-size:1.2rem; margin:32px 0 12px; font-weight:600; color:var(--ink); }
+  section.block p{ color:var(--ink-dim); max-width:72ch; }
+  section.block ul, section.block ol.reg{ color:var(--ink-dim); max-width:70ch; padding-left:1.2em; }
+  section.block li{ margin-bottom:6px; }
+  code.inline{
+    font-family:var(--mono); background:var(--panel-2); padding:2px 6px; border-radius:4px;
+    font-size:0.88em; color:var(--teal); border:1px solid var(--line);
+  }
+
+  pre.code{
+    background:#050506; border:1px solid var(--line); border-radius:8px; padding:18px 20px;
+    overflow-x:auto; font-family:var(--mono); font-size:0.86rem; line-height:1.62; color:#dcdce0; margin:16px 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  pre.code .cm{ color:#6a6a70; }
+  pre.code .kw{ color:#f2ac4f; }
+  pre.code .ty{ color:#7fabe4; }
+  pre.code .st{ color:#63d2b6; }
+
+  table.modtable{ width:100%; border-collapse:collapse; margin:20px 0 8px; font-size:0.92rem; }
+  table.modtable caption{ text-align:left; color:var(--ink-faint); font-family:var(--mono); font-size:0.75rem; margin-bottom:8px;}
+  table.modtable th, table.modtable td{ border:1px solid var(--line); padding:10px 12px; text-align:left; }
+  table.modtable th{ background:var(--panel-2); font-family:var(--head); font-weight:600; }
+  table.modtable td.mono{ font-family:var(--mono); color:var(--gold); }
+  table.modtable td.yes{ color:var(--teal); font-family:var(--mono); }
+  table.modtable td.no{ color:var(--coral); font-family:var(--mono); }
+
+  .relation-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:26px 0; }
+  @media (max-width:800px){ .relation-grid{ grid-template-columns:1fr; } }
+  .relation-card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:20px; }
+  .relation-card h4{ font-family:var(--head); margin:14px 0 8px; font-size:1.05rem; }
+  .relation-card svg{ width:100%; height:76px; display:block; }
+  .relation-card p{ font-size:0.9rem; margin:0 0 10px; }
+  .relation-card .tag{
+    display:inline-block; font-family:var(--mono); font-size:0.72rem; padding:3px 8px;
+    border-radius:3px; border:1px solid var(--line); color:var(--ink-faint);
+  }
+  .relation-card.assoc h4{ color:var(--blue); }
+  .relation-card.agg h4{ color:var(--gold); }
+  .relation-card.comp h4{ color:var(--teal); }
+
+  table.reltable{ width:100%; border-collapse:collapse; margin:24px 0; font-size:0.9rem; }
+  table.reltable th, table.reltable td{ border:1px solid var(--line); padding:10px 12px; text-align:left; vertical-align:top; }
+  table.reltable th{ background:var(--panel-2); font-family:var(--head); }
+  table.reltable th:first-child, table.reltable td:first-child{ color:var(--ink-faint); font-family:var(--mono); font-size:0.82rem; width:160px; }
+
+  details.reveal{ margin:14px 0; border:1px solid var(--line); border-radius:8px; background:var(--panel); overflow:hidden; }
+  details.reveal > summary{
+    cursor:pointer; padding:12px 16px; font-family:var(--mono); font-size:0.82rem; color:var(--gold);
+    list-style:none; display:flex; align-items:center; gap:8px; user-select:none;
+  }
+  details.reveal > summary::-webkit-details-marker{ display:none; }
+  details.reveal > summary::before{ content:'▸'; transition:transform .15s; }
+  details.reveal[open] > summary::before{ transform:rotate(90deg); }
+  details.reveal .reveal-body{ padding:0 16px 16px; color:var(--ink-dim); border-top:1px solid var(--line); padding-top:14px; }
+
+  .ex-item{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:20px; margin-bottom:18px; }
+  .ex-item .ex-label{
+    font-family:var(--mono); font-size:0.72rem; color:var(--ink-faint); margin-bottom:8px;
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
+  }
+  .diff{ font-family:var(--mono); font-size:0.68rem; padding:2px 8px; border-radius:3px; border:1px solid var(--line); }
+  .diff.facil{ color:var(--teal); }
+  .diff.medio{ color:var(--gold); }
+  .diff.dificil{ color:var(--coral); }
+
+  .tf-item{
+    display:flex; justify-content:space-between; align-items:center; gap:16px;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 18px; margin-bottom:10px;
+  }
+  .tf-item p{ margin:0; font-size:0.94rem; color:var(--ink); max-width:60ch; }
+  .tf-toggle{
+    font-family:var(--mono); font-size:0.78rem; background:var(--panel-2); border:1px solid var(--line); color:var(--ink-faint);
+    padding:7px 14px; border-radius:5px; cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .tf-toggle.on{ color:#000; font-weight:600; }
+  .tf-toggle.on.true{ background:var(--teal); border-color:var(--teal); }
+  .tf-toggle.on.false{ background:var(--coral); border-color:var(--coral); }
+
+  /* quiz */
+  #quiz-app{ background:linear-gradient(180deg, var(--panel), var(--bg-raise)); border:1px solid var(--line); border-radius:10px; padding:28px 30px; }
+  .qz-progress{ font-family:var(--mono); font-size:0.78rem; color:var(--ink-faint); margin-bottom:16px; display:flex; justify-content:space-between; }
+  .qz-bar{ height:3px; background:var(--line-soft); border-radius:2px; margin-bottom:20px; overflow:hidden; }
+  .qz-bar-fill{ height:100%; background:linear-gradient(90deg, var(--gold), var(--teal)); transition:width .2s ease; }
+  .qz-question{ font-family:var(--head); font-size:1.15rem; margin:0 0 18px; }
+  .qz-options{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .qz-opt{
+    text-align:left; background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
+    padding:12px 14px; border-radius:6px; cursor:pointer; font-family:var(--body); font-size:0.95rem;
+    transition:border-color .12s, background .12s;
+  }
+  .qz-opt:hover:not(:disabled){ border-color:var(--ink-faint); }
+  .qz-opt.correct{ border-color:var(--teal); background:rgba(99,210,182,0.1); color:var(--teal); }
+  .qz-opt.wrong{ border-color:var(--coral); background:rgba(227,132,111,0.1); color:var(--coral); }
+  .qz-opt:disabled{ cursor:default; opacity:0.92; }
+  .qz-explain{
+    font-size:0.9rem; color:var(--ink-dim); background:var(--bg-raise); border-left:3px solid var(--gold);
+    padding:12px 14px; border-radius:4px; margin-bottom:16px; display:none;
+  }
+  .qz-explain.show{ display:block; }
+  .qz-next{
+    font-family:var(--mono); font-size:0.82rem; background:var(--gold); color:#1a1204;
+    border:none; padding:10px 18px; border-radius:5px; cursor:pointer; font-weight:600;
+  }
+  .qz-next:disabled{ opacity:0.35; cursor:not-allowed; }
+  .qz-result{ text-align:center; padding:20px 0; }
+  .qz-result .score{ font-family:var(--head); font-size:2.8rem; color:var(--gold); margin:0 0 6px; }
+  .qz-restart{
+    font-family:var(--mono); font-size:0.82rem; background:transparent; color:var(--ink);
+    border:1px solid var(--line); padding:9px 16px; border-radius:5px; cursor:pointer; margin-top:14px;
+  }
+  .qz-breakdown{
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:18px 0 6px; max-width:420px; margin-left:auto; margin-right:auto;
+  }
+  .qz-dot{ width:11px; height:11px; border-radius:2px; }
+  .qz-dot.ok{ background:var(--teal); }
+  .qz-dot.bad{ background:var(--coral); }
+
+  .fill-blank{ color:var(--gold); border-bottom:1px dashed var(--gold); padding:0 4px; }
+
+  footer{
+    max-width:1180px; margin:0 auto; padding:40px 24px 60px; color:var(--ink-faint);
+    font-family:var(--mono); font-size:0.78rem; border-top:1px solid var(--line-soft); position:relative; z-index:1;
+  }
+
+  @media (max-width:880px){
+    .wrap{ grid-template-columns:1fr; }
+    nav.toc{ position:static; border-bottom:1px solid var(--line-soft); padding-bottom:20px; margin-bottom:8px; }
+    nav.toc ol{ display:flex; flex-wrap:wrap; gap:4px 14px; }
+    nav.toc a{ border-left:none; padding:4px 0; }
+    nav.toc a.active{ color:var(--gold); }
+    nav.toc .toc-stat{ display:none; }
+    .tf-item{ flex-direction:column; align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <p class="kicker">guia de revisão · programação orientada a objetos</p>
+      <h1 class="title">Encapsulamento, herança<br>e as relações entre <em>objetos</em>.</h1>
+      <p class="lede">Teoria direta ao ponto e uma bateria grande de exercícios sobre modificadores de acesso, getters/setters, sobrescrita, sobrecarga, associação, agregação e composição — para revisar antes da prova.</p>
+      <div class="hero-meta">
+        <span><strong>6</strong> seções de teoria</span>
+        <span><strong>18</strong> questões de múltipla escolha</span>
+        <span><strong>29</strong> exercícios ao todo</span>
+      </div>
+    </div>
+    <div class="diagram-card">
+      <svg viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg">
+        <rect x="14" y="18" width="88" height="50" rx="3" fill="#141416" stroke="#7fabe4" stroke-width="1.5"/>
+        <text x="58" y="47" text-anchor="middle" fill="#f3f3f3" font-family="JetBrains Mono, monospace" font-size="11">Motorista</text>
+        <rect x="218" y="18" width="88" height="50" rx="3" fill="#141416" stroke="#7fabe4" stroke-width="1.5"/>
+        <text x="262" y="47" text-anchor="middle" fill="#f3f3f3" font-family="JetBrains Mono, monospace" font-size="11">Carro</text>
+        <line class="draw-line d1" x1="102" y1="43" x2="218" y2="43" stroke="#7fabe4" stroke-width="1.5"/>
+        <text class="fade-in f1" x="160" y="35" text-anchor="middle" fill="#7fabe4" font-family="JetBrains Mono, monospace" font-size="9">associação</text>
+
+        <rect x="14" y="94" width="88" height="50" rx="3" fill="#141416" stroke="#f2ac4f" stroke-width="1.5"/>
+        <text x="58" y="123" text-anchor="middle" fill="#f3f3f3" font-family="JetBrains Mono, monospace" font-size="11">Time</text>
+        <rect x="218" y="94" width="88" height="50" rx="3" fill="#141416" stroke="#f2ac4f" stroke-width="1.5"/>
+        <text x="262" y="123" text-anchor="middle" fill="#f3f3f3" font-family="JetBrains Mono, monospace" font-size="11">Jogador</text>
+        <line class="draw-line d2" x1="102" y1="119" x2="218" y2="119" stroke="#f2ac4f" stroke-width="1.5"/>
+        <polygon class="fade-in f2" points="102,119 90,113 78,119 90,125" fill="#141416" stroke="#f2ac4f" stroke-width="1.5"/>
+        <text class="fade-in f2" x="160" y="111" text-anchor="middle" fill="#f2ac4f" font-family="JetBrains Mono, monospace" font-size="9">agregação</text>
+
+        <rect x="14" y="170" width="88" height="34" rx="3" fill="#141416" stroke="#63d2b6" stroke-width="1.5"/>
+        <text x="58" y="191" text-anchor="middle" fill="#f3f3f3" font-family="JetBrains Mono, monospace" font-size="10">Casa</text>
+        <rect x="218" y="170" width="88" height="34" rx="3" fill="#141416" stroke="#63d2b6" stroke-width="1.5"/>
+        <text x="262" y="191" text-anchor="middle" fill="#f3f3f3" font-family="JetBrains Mono, monospace" font-size="10">Cômodo</text>
+        <line class="draw-line d3" x1="102" y1="187" x2="218" y2="187" stroke="#63d2b6" stroke-width="1.5"/>
+        <polygon class="fade-in f3" points="102,187 90,181 78,187 90,193" fill="#63d2b6" stroke="#63d2b6" stroke-width="1.5"/>
+      </svg>
+      <p class="diagram-caption">os três tipos de relação entre classes, lado a lado</p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc" id="toc">
+    <p class="toc-label">neste guia</p>
+    <ol>
+      <li><a href="#encapsulamento">Encapsulamento</a></li>
+      <li><a href="#getters-setters">Getters e setters</a></li>
+      <li><a href="#heranca">Herança e override</a></li>
+      <li><a href="#relacoes">Associação, agregação, composição</a></li>
+      <li><a href="#resumo">Quadro-resumo</a></li>
+      <li><a href="#exercicios">Exercícios</a></li>
+    </ol>
+    <div class="toc-stat">
+      <div>quiz: <b>18</b> questões</div>
+      <div>classificação: <b>6</b> casos</div>
+      <div>override/overload: <b>6</b> casos</div>
+      <div>modificadores: <b>4</b> cenários</div>
+      <div>complete o código: <b>3</b> trechos</div>
+      <div>verdadeiro/falso: <b>8</b> afirmações</div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- 1. ENCAPSULAMENTO -->
+    <section class="block" id="encapsulamento">
+      <span class="num">01</span>
+      <h2>Encapsulamento e modificadores de acesso</h2>
+      <p>Encapsular significa esconder os detalhes internos de uma classe e controlar quem pode ler ou alterar seus atributos e métodos. Em Java, esse controle é feito por quatro níveis de acesso.</p>
+
+      <h3>Os quatro níveis</h3>
+      <ul>
+        <li><code class="inline">private</code> — visível apenas dentro da própria classe.</li>
+        <li><code class="inline">default</code> (sem modificador) — visível na própria classe e em qualquer classe do mesmo pacote.</li>
+        <li><code class="inline">protected</code> — visível na classe, no pacote, e também em subclasses que estejam em outro pacote.</li>
+        <li><code class="inline">public</code> — visível em qualquer lugar do programa.</li>
+      </ul>
+
+      <table class="modtable">
+        <caption>quem enxerga o quê</caption>
+        <thead><tr><th>Modificador</th><th>Mesma classe</th><th>Mesmo pacote</th><th>Subclasse (outro pacote)</th><th>Qualquer lugar</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">private</td><td class="yes">sim</td><td class="no">não</td><td class="no">não</td><td class="no">não</td></tr>
+          <tr><td class="mono">default</td><td class="yes">sim</td><td class="yes">sim</td><td class="no">não</td><td class="no">não</td></tr>
+          <tr><td class="mono">protected</td><td class="yes">sim</td><td class="yes">sim</td><td class="yes">sim</td><td class="no">não</td></tr>
+          <tr><td class="mono">public</td><td class="yes">sim</td><td class="yes">sim</td><td class="yes">sim</td><td class="yes">sim</td></tr>
+        </tbody>
+      </table>
+
+      <p>Na prática, o padrão mais cobrado em prova é: <strong style="color:var(--ink)">atributos privados, métodos públicos</strong>. Isso protege o estado interno do objeto e obriga quem usa a classe a passar pelos métodos que você definiu.</p>
+
+      <pre class="code"><span class="kw">public class</span> <span class="ty">ContaBancaria</span> {
+    <span class="kw">private</span> <span class="ty">double</span> saldo;       <span class="cm">// ninguém de fora acessa "saldo" diretamente</span>
+    <span class="kw">private</span> <span class="ty">String</span> titular;
+
+    <span class="kw">public</span> <span class="ty">void</span> depositar(<span class="ty">double</span> valor) {
+        <span class="kw">if</span> (valor > <span class="st">0</span>) {
+            <span class="kw">this</span>.saldo += valor;
+        }
+    }
+}</pre>
+    </section>
+
+    <!-- 2. GETTERS/SETTERS -->
+    <section class="block" id="getters-setters">
+      <span class="num">02</span>
+      <h2>Getters e setters</h2>
+      <p>Se os atributos são <code class="inline">private</code>, algo precisa expor um jeito controlado de ler e escrever esses valores de fora da classe. É para isso que existem os métodos de acesso.</p>
+
+      <ul>
+        <li><strong style="color:var(--ink)">Getter</strong> — método que retorna o valor de um atributo. Convenção: <code class="inline">getNome()</code>, ou <code class="inline">isAtivo()</code> para booleanos.</li>
+        <li><strong style="color:var(--ink)">Setter</strong> — método que altera o valor de um atributo. Convenção: <code class="inline">setNome(String nome)</code>.</li>
+      </ul>
+
+      <p>O ponto principal de prova aqui não é a sintaxe — é o motivo: um setter permite <strong style="color:var(--ink)">validar</strong> um valor antes de aceitá-lo, e um getter permite mudar a forma como o dado é guardado internamente sem quebrar quem usa a classe.</p>
+
+      <pre class="code"><span class="kw">public class</span> <span class="ty">ContaBancaria</span> {
+    <span class="kw">private</span> <span class="ty">double</span> saldo;
+
+    <span class="kw">public</span> <span class="ty">double</span> getSaldo() {
+        <span class="kw">return</span> <span class="kw">this</span>.saldo;
+    }
+
+    <span class="kw">public</span> <span class="ty">void</span> setSaldo(<span class="ty">double</span> saldo) {
+        <span class="kw">if</span> (saldo < <span class="st">0</span>) {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Saldo não pode ser negativo"</span>);
+        }
+        <span class="kw">this</span>.saldo = saldo;
+    }
+}</pre>
+      <p>Sem o setter validando, qualquer parte do código poderia colocar um saldo negativo direto no atributo. Com o atributo privado e um setter no meio, essa regra fica garantida em um único lugar.</p>
+    </section>
+
+    <!-- 3. HERANÇA / OVERRIDE / OVERLOAD -->
+    <section class="block" id="heranca">
+      <span class="num">03</span>
+      <h2>Herança, sobrescrita e sobrecarga</h2>
+      <p>Herança (<code class="inline">extends</code>) permite que uma classe reaproveite atributos e métodos de outra, numa relação do tipo "é um" — um <code class="inline">Gerente</code> é um <code class="inline">Funcionario</code>. Java só permite herdar diretamente de <strong style="color:var(--ink)">uma única</strong> superclasse.</p>
+
+      <h3>Sobrescrita — <span style="color:var(--coral); font-family:var(--mono); font-size:0.85em;">@Override</span></h3>
+      <p>A subclasse redefine um método herdado, mantendo a <strong style="color:var(--ink)">mesma assinatura</strong> (mesmo nome e mesmos parâmetros), para mudar o comportamento. É decidida em tempo de execução — é a base do polimorfismo dinâmico.</p>
+      <ul>
+        <li>Nome e lista de parâmetros idênticos aos do método da superclasse.</li>
+        <li>O tipo de retorno deve ser o mesmo ou um subtipo dele (retorno covariante).</li>
+        <li>O modificador de acesso não pode ficar <em>mais restritivo</em> — de <code class="inline">public</code> não se pode ir para <code class="inline">protected</code>, por exemplo.</li>
+        <li>Não pode lançar exceções verificadas novas ou mais abrangentes que as do método original.</li>
+        <li>A anotação <code class="inline">@Override</code> não é obrigatória, mas faz o compilador avisar se a assinatura não bater — por isso é boa prática sempre usá-la.</li>
+      </ul>
+
+      <pre class="code"><span class="kw">public class</span> <span class="ty">Funcionario</span> {
+    <span class="kw">public</span> <span class="ty">double</span> calcularBonus() {
+        <span class="kw">return</span> <span class="st">100.0</span>;
+    }
+}
+
+<span class="kw">public class</span> <span class="ty">Gerente</span> <span class="kw">extends</span> <span class="ty">Funcionario</span> {
+    <span class="cm">@Override</span>
+    <span class="kw">public</span> <span class="ty">double</span> calcularBonus() {
+        <span class="kw">return</span> <span class="st">500.0</span>; <span class="cm">// mesma assinatura, comportamento novo</span>
+    }
+}</pre>
+
+      <h3>Sobrecarga — overload</h3>
+      <p>Dois métodos com o <strong style="color:var(--ink)">mesmo nome</strong> mas <strong style="color:var(--ink)">parâmetros diferentes</strong> (em quantidade, tipo ou ordem), dentro da mesma classe. É resolvida em tempo de compilação, olhando os argumentos passados na chamada.</p>
+
+      <pre class="code"><span class="kw">public class</span> <span class="ty">Calculadora</span> {
+    <span class="kw">public</span> <span class="ty">int</span> somar(<span class="ty">int</span> a, <span class="ty">int</span> b) {
+        <span class="kw">return</span> a + b;
+    }
+
+    <span class="kw">public</span> <span class="ty">double</span> somar(<span class="ty">double</span> a, <span class="ty">double</span> b) {
+        <span class="kw">return</span> a + b; <span class="cm">// parâmetros diferentes = sobrecarga válida</span>
+    }
+}</pre>
+      <p style="color:var(--ink-faint); font-size:0.9rem;">Mudar apenas o tipo de retorno, mantendo os mesmos parâmetros, <strong>não</strong> caracteriza sobrecarga — o compilador não consegue diferenciar as chamadas e o código não compila.</p>
+    </section>
+
+    <!-- 4. ASSOCIACAO / AGREGACAO / COMPOSICAO -->
+    <section class="block" id="relacoes">
+      <span class="num">04</span>
+      <h2>Associação, agregação e composição</h2>
+      <p>As três descrevem como uma classe se relaciona com outra, mas variam na <strong style="color:var(--ink)">força do vínculo</strong> e em quem controla o ciclo de vida de quem.</p>
+
+      <div class="relation-grid">
+        <div class="relation-card assoc">
+          <span class="tag">vínculo fraco</span>
+          <h4>Associação</h4>
+          <svg viewBox="0 0 200 60"><rect x="8" y="14" width="70" height="32" rx="3" fill="#141416" stroke="#7fabe4" stroke-width="1.5"/><rect x="122" y="14" width="70" height="32" rx="3" fill="#141416" stroke="#7fabe4" stroke-width="1.5"/><line x1="78" y1="30" x2="122" y2="30" stroke="#7fabe4" stroke-width="1.5"/><text x="90" y="24" fill="#7fabe4" font-family="JetBrains Mono, monospace" font-size="8">1</text><text x="108" y="24" fill="#7fabe4" font-family="JetBrains Mono, monospace" font-size="8">1</text></svg>
+          <p>Relação genérica entre objetos que se "conhecem" e colaboram, mas têm ciclos de vida totalmente independentes. Não é necessariamente todo-parte.</p>
+          <p style="color:var(--ink-faint); font-size:0.82rem;">ex.: Motorista e Carro</p>
+        </div>
+        <div class="relation-card agg">
+          <span class="tag">vínculo médio</span>
+          <h4>Agregação</h4>
+          <svg viewBox="0 0 200 60"><rect x="8" y="14" width="70" height="32" rx="3" fill="#141416" stroke="#f2ac4f" stroke-width="1.5"/><rect x="122" y="14" width="70" height="32" rx="3" fill="#141416" stroke="#f2ac4f" stroke-width="1.5"/><line x1="90" y1="30" x2="122" y2="30" stroke="#f2ac4f" stroke-width="1.5"/><polygon points="78,30 90,24 102,30 90,36" fill="#141416" stroke="#f2ac4f" stroke-width="1.5"/><text x="105" y="24" fill="#f2ac4f" font-family="JetBrains Mono, monospace" font-size="8">1..*</text></svg>
+          <p>Relação todo-parte, mas a parte existe de forma independente do todo — normalmente é criada fora e apenas "recebida" pelo todo.</p>
+          <p style="color:var(--ink-faint); font-size:0.82rem;">ex.: Time e Jogador · losango vazado</p>
+        </div>
+        <div class="relation-card comp">
+          <span class="tag">vínculo forte</span>
+          <h4>Composição</h4>
+          <svg viewBox="0 0 200 60"><rect x="8" y="14" width="70" height="32" rx="3" fill="#141416" stroke="#63d2b6" stroke-width="1.5"/><rect x="122" y="14" width="70" height="32" rx="3" fill="#141416" stroke="#63d2b6" stroke-width="1.5"/><line x1="90" y1="30" x2="122" y2="30" stroke="#63d2b6" stroke-width="1.5"/><polygon points="78,30 90,24 102,30 90,36" fill="#63d2b6" stroke="#63d2b6" stroke-width="1.5"/><text x="105" y="24" fill="#63d2b6" font-family="JetBrains Mono, monospace" font-size="8">1..*</text></svg>
+          <p>Relação todo-parte em que a parte não existe sem o todo: é criada por ele e morre junto com ele.</p>
+          <p style="color:var(--ink-faint); font-size:0.82rem;">ex.: Casa e Cômodo · losango preenchido</p>
+        </div>
+      </div>
+
+      <h3>Em código</h3>
+      <p><strong style="color:var(--blue)">Associação</strong> — o Motorista recebe um Carro já pronto, apenas o usa por um instante:</p>
+      <pre class="code"><span class="kw">public class</span> <span class="ty">Motorista</span> {
+    <span class="kw">public</span> <span class="ty">void</span> dirigir(<span class="ty">Carro</span> carro) {
+        carro.acelerar();
+    }
+}</pre>
+
+      <p><strong style="color:var(--gold)">Agregação</strong> — o Time recebe a lista de Jogadores já existentes, geralmente pelo construtor; se o time acabar, os jogadores continuam existindo:</p>
+      <pre class="code"><span class="kw">public class</span> <span class="ty">Time</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">Jogador</span>&gt; jogadores;
+
+    <span class="kw">public</span> <span class="ty">Time</span>(<span class="ty">List</span>&lt;<span class="ty">Jogador</span>&gt; jogadores) {
+        <span class="kw">this</span>.jogadores = jogadores; <span class="cm">// recebido pronto de fora</span>
+    }
+}</pre>
+
+      <p><strong style="color:var(--teal)">Composição</strong> — a Casa cria os Cômodos dentro de si; se a Casa deixar de existir, os Cômodos vão junto:</p>
+      <pre class="code"><span class="kw">public class</span> <span class="ty">Casa</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">Comodo</span>&gt; comodos = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="ty">Casa</span>() {
+        comodos.add(<span class="kw">new</span> <span class="ty">Comodo</span>(<span class="st">"Sala"</span>)); <span class="cm">// criado internamente</span>
+        comodos.add(<span class="kw">new</span> <span class="ty">Comodo</span>(<span class="st">"Cozinha"</span>));
+    }
+}</pre>
+
+      <table class="reltable">
+        <thead><tr><th></th><th>Associação</th><th>Agregação</th><th>Composição</th></tr></thead>
+        <tbody>
+          <tr><td>é todo-parte?</td><td>não necessariamente</td><td>sim</td><td>sim</td></tr>
+          <tr><td>ciclo de vida da parte</td><td>independente</td><td>independente do todo</td><td>depende do todo</td></tr>
+          <tr><td>quem cria a parte</td><td>externo</td><td>externo, passada pronta</td><td>o próprio todo</td></tr>
+          <tr><td>símbolo UML</td><td>linha simples</td><td>losango vazado</td><td>losango preenchido</td></tr>
+          <tr><td>exemplo</td><td>Motorista → Carro</td><td>Time → Jogador</td><td>Casa → Cômodo</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. RESUMO -->
+    <section class="block" id="resumo">
+      <span class="num">05</span>
+      <h2>Quadro-resumo para revisão rápida</h2>
+      <p>Uma última passada nos pontos que mais caem em prova, antes dos exercícios.</p>
+
+      <h3>Modificadores</h3>
+      <p><code class="inline">private</code> → só a classe · <code class="inline">default</code> → classe + pacote · <code class="inline">protected</code> → classe + pacote + subclasses · <code class="inline">public</code> → todo mundo.</p>
+
+      <h3>Override × Overload</h3>
+      <p><strong style="color:var(--ink)">Override</strong>: mesma assinatura, entre superclasse e subclasse, resolvido em tempo de execução, retorno pode ser covariante, acesso não pode ficar mais restrito. <strong style="color:var(--ink)">Overload</strong>: mesmo nome, parâmetros diferentes, dentro da mesma classe, resolvido em tempo de compilação.</p>
+
+      <h3>Associação × Agregação × Composição</h3>
+      <p>Força crescente do vínculo: associação (uso pontual) → agregação (todo-parte, parte independente) → composição (todo-parte, parte dependente). O losango no diagrama UML sempre fica do lado do "todo": vazado é agregação, preenchido é composição.</p>
+    </section>
+
+    <!-- 6. EXERCICIOS -->
+    <section class="block" id="exercicios">
+      <span class="num">06</span>
+      <h2>Exercícios</h2>
+      <p>29 exercícios ao todo, divididos em seis blocos. Comece pelo quiz para mapear onde revisar, depois use os blocos de código para praticar o raciocínio.</p>
+
+      <h3>A. Quiz — 18 questões</h3>
+      <div id="quiz-app"></div>
+
+      <h3 style="margin-top:48px;">B. Classifique a relação</h3>
+      <p>Para cada trecho, identifique se é associação, agregação ou composição.</p>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 1</span><span class="diff facil">fácil</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Pedido</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">ItemPedido</span>&gt; itens = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public void</span> adicionarItem(<span class="ty">String</span> produto, <span class="ty">int</span> qtd) {
+        itens.add(<span class="kw">new</span> <span class="ty">ItemPedido</span>(produto, qtd));
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--teal)">Composição.</strong> O <code class="inline">Pedido</code> cria os próprios <code class="inline">ItemPedido</code> internamente — se o pedido for descartado, os itens não existem em nenhum outro lugar.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 2</span><span class="diff facil">fácil</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Biblioteca</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">Livro</span>&gt; acervo;
+
+    <span class="kw">public</span> <span class="ty">Biblioteca</span>(<span class="ty">List</span>&lt;<span class="ty">Livro</span>&gt; acervo) {
+        <span class="kw">this</span>.acervo = acervo;
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--gold)">Agregação.</strong> Os livros já existem antes de chegar à biblioteca e continuam existindo caso ela feche — a lista chega pronta de fora, pelo construtor.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 3</span><span class="diff facil">fácil</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Cliente</span> {
+    <span class="kw">public void</span> fazerPedido(<span class="ty">Loja</span> loja) {
+        loja.registrarPedido(<span class="kw">this</span>);
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--blue)">Associação.</strong> Cliente e Loja apenas colaboram por um instante através do parâmetro do método; nenhum dos dois é "parte" do outro e ambos existem de forma totalmente independente.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 4</span><span class="diff medio">médio</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Escola</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">Sala</span>&gt; salas = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="ty">Escola</span>(<span class="ty">int</span> numeroDeSalas) {
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="st">0</span>; i < numeroDeSalas; i++) {
+            salas.add(<span class="kw">new</span> <span class="ty">Sala</span>());
+        }
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--teal)">Composição.</strong> As salas nascem dentro do construtor da escola e não fazem sentido fora dela — se a escola for desativada, as salas somem junto.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 5</span><span class="diff medio">médio</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Orquestra</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">Musico</span>&gt; musicos;
+
+    <span class="kw">public void</span> convocar(<span class="ty">List</span>&lt;<span class="ty">Musico</span>&gt; musicos) {
+        <span class="kw">this</span>.musicos = musicos;
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--gold)">Agregação.</strong> Os músicos existem como profissionais independentemente da orquestra e são apenas "emprestados" a ela — continuam existindo se a orquestra for desfeita.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 6</span><span class="diff dificil">difícil</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">CorpoHumano</span> {
+    <span class="kw">private</span> <span class="ty">Coracao</span> coracao = <span class="kw">new</span> <span class="ty">Coracao</span>();
+
+    <span class="kw">public void</span> bater() {
+        coracao.pulsar();
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--teal)">Composição.</strong> O coração é criado junto com o corpo e não existe (nesse modelo) fora dele — um caso clássico de vínculo forte, usado com frequência em prova como exemplo canônico de composição.</div>
+        </details>
+      </div>
+
+      <h3 style="margin-top:48px;">C. Override, overload ou erro?</h3>
+      <p>Diga se cada par de métodos representa sobrescrita válida, sobrecarga válida, ou erro de compilação.</p>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 7</span><span class="diff facil">fácil</span></div>
+        <pre class="code"><span class="cm">// em Funcionario</span>
+<span class="kw">public void</span> registrarPonto() { ... }
+
+<span class="cm">// em Estagiario extends Funcionario</span>
+<span class="kw">public void</span> registrarPonto() { ... }</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--teal)">Sobrescrita válida.</strong> Mesma assinatura entre superclasse e subclasse, mesmo nível de acesso.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 8</span><span class="diff facil">fácil</span></div>
+        <pre class="code"><span class="cm">// na mesma classe Calculadora</span>
+<span class="kw">public int</span> somar(<span class="ty">int</span> a, <span class="ty">int</span> b) { ... }
+<span class="kw">public int</span> somar(<span class="ty">int</span> a, <span class="ty">int</span> b, <span class="ty">int</span> c) { ... }</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--teal)">Sobrecarga válida.</strong> Mesmo nome, quantidade diferente de parâmetros, na mesma classe.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 9</span><span class="diff medio">médio</span></div>
+        <pre class="code"><span class="cm">// em Funcionario</span>
+<span class="kw">public void</span> falar() { ... }
+
+<span class="cm">// em Gerente extends Funcionario</span>
+<span class="kw">private void</span> falar() { ... }</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--coral)">Erro de compilação.</strong> A subclasse está tentando reduzir a visibilidade do método (de <code class="inline">public</code> para <code class="inline">private</code>), o que não é permitido em sobrescrita.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 10</span><span class="diff medio">médio</span></div>
+        <pre class="code"><span class="cm">// na mesma classe Relatorio</span>
+<span class="kw">public void</span> imprimir(<span class="ty">String</span> texto) { ... }
+<span class="kw">public void</span> imprimir(<span class="ty">String</span> texto) { ... }</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--coral)">Erro de compilação.</strong> Assinaturas idênticas dentro da mesma classe — não é sobrecarga, é um método duplicado, e isso o compilador rejeita.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 11</span><span class="diff dificil">difícil</span></div>
+        <pre class="code"><span class="cm">// em Animal</span>
+<span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Animal</span>&gt; reproduzir() { ... }
+
+<span class="cm">// em Cachorro extends Animal</span>
+<span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">Cachorro</span>&gt; reproduzir() { ... }</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--teal)">Sobrescrita válida.</strong> <code class="inline">List&lt;Cachorro&gt;</code> é um retorno covariante em relação a <code class="inline">List&lt;Animal&gt;</code> quando <code class="inline">Cachorro extends Animal</code> — Java aceita esse tipo de estreitamento no retorno.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 12</span><span class="diff dificil">difícil</span></div>
+        <pre class="code"><span class="cm">// em Repositorio</span>
+<span class="kw">protected void</span> salvar() <span class="kw">throws</span> <span class="ty">IOException</span> { ... }
+
+<span class="cm">// em RepositorioArquivo extends Repositorio</span>
+<span class="kw">public void</span> salvar() <span class="kw">throws</span> <span class="ty">Exception</span> { ... }</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><strong style="color:var(--coral)">Erro de compilação.</strong> Ampliar o acesso (<code class="inline">protected</code> → <code class="inline">public</code>) é permitido, mas lançar <code class="inline">Exception</code> — mais abrangente que a <code class="inline">IOException</code> original — não é.</div>
+        </details>
+      </div>
+
+      <h3 style="margin-top:48px;">D. Qual modificador usar?</h3>
+      <p>Para cada cenário, escolha o modificador de acesso mais adequado.</p>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 13</span><span class="diff facil">fácil</span></div>
+        <p style="margin:0;">Um atributo que só pode ser lido e alterado dentro da própria classe, nunca de fora nem por subclasses.</p>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><code class="inline">private</code> — é o único nível que fecha o acesso mesmo para subclasses.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 14</span><span class="diff medio">médio</span></div>
+        <p style="margin:0;">Um método que deve poder ser reaproveitado por subclasses em outros pacotes, mas não deve fazer parte da API pública da classe.</p>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><code class="inline">protected</code> — libera para subclasses (mesmo em outros pacotes) sem abrir para qualquer classe do programa.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 15</span><span class="diff medio">médio</span></div>
+        <p style="margin:0;">Uma classe utilitária usada só por outras classes do mesmo pacote, sem virar parte da API pública do sistema.</p>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><code class="inline">default</code> (sem modificador) — mantém o acesso restrito ao pacote, sem expor nada além dele.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 16</span><span class="diff facil">fácil</span></div>
+        <p style="margin:0;">Um método que faz parte da API que outras equipes vão consumir livremente, de qualquer pacote.</p>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><code class="inline">public</code> — é o único nível visível de qualquer lugar do programa.</div>
+        </details>
+      </div>
+
+      <h3 style="margin-top:48px;">E. Complete o código</h3>
+      <p>Preencha as lacunas e depois confira a resposta.</p>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 17</span><span class="diff facil">fácil</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Produto</span> {
+    <span class="kw">private</span> <span class="ty">double</span> preco;
+
+    <span class="kw">public</span> <span class="ty">double</span> <span class="fill-blank">______</span>() {
+        <span class="kw">return</span> <span class="kw">this</span>.preco;
+    }
+
+    <span class="kw">public void</span> <span class="fill-blank">______</span>(<span class="ty">double</span> preco) {
+        <span class="kw">this</span>.preco = preco;
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body">Getter: <code class="inline">getPreco</code> · Setter: <code class="inline">setPreco(double preco)</code> — seguindo a convenção <code class="inline">get</code>/<code class="inline">set</code> + nome do atributo com inicial maiúscula.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 18</span><span class="diff medio">médio</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Animal</span> {
+    <span class="kw">public void</span> emitirSom() { ... }
+}
+
+<span class="kw">public class</span> <span class="ty">Cachorro</span> <span class="kw">extends</span> <span class="ty">Animal</span> {
+    <span class="fill-blank">______</span>
+    <span class="kw">public void</span> emitirSom() {
+        System.out.println(<span class="st">"Au au"</span>);
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><code class="inline">@Override</code> — não é obrigatória para o código funcionar, mas garante que o compilador acuse um erro caso a assinatura não bata com a do método da superclasse.</div>
+        </details>
+      </div>
+
+      <div class="ex-item">
+        <div class="ex-label"><span>exercício 19</span><span class="diff dificil">difícil</span></div>
+        <pre class="code"><span class="kw">public class</span> <span class="ty">Pedido</span> {
+    <span class="kw">private</span> <span class="ty">List</span>&lt;<span class="ty">ItemPedido</span>&gt; itens = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+    <span class="kw">public</span> <span class="ty">Pedido</span>(<span class="ty">String</span> produto, <span class="ty">int</span> qtd) {
+        itens.add(<span class="fill-blank">______</span>);
+    }
+}</pre>
+        <details class="reveal"><summary>Ver resposta</summary>
+          <div class="reveal-body"><code class="inline">new ItemPedido(produto, qtd)</code> — o item é criado dentro do próprio construtor do Pedido, o que caracteriza composição.</div>
+        </details>
+      </div>
+
+      <h3 style="margin-top:48px;">F. Verdadeiro ou falso</h3>
+      <p>Clique em cada afirmação para revelar se ela é verdadeira ou falsa.</p>
+      <div id="tf-app"></div>
+
+    </section>
+
+  </main>
+</div>
+
+<footer>guia de estudo — encapsulamento, herança e relações entre objetos · gerado para revisão de prova</footer>
+
+<script>
+(function(){
+  // scroll progress + active TOC highlight
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var sections = links.map(function(l){ return document.querySelector(l.getAttribute('href')); });
+  var progressEl = document.getElementById('progress');
+  function onScroll(){
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+    progressEl.style.width = pct + '%';
+
+    var pos = window.scrollY + 120;
+    var current = 0;
+    sections.forEach(function(s, i){ if (s && s.offsetTop <= pos) current = i; });
+    links.forEach(function(l, i){ l.classList.toggle('active', i === current); });
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Quiz
+  var questions = [
+    { q: "Qual modificador de acesso permite que um atributo seja acessado apenas dentro da própria classe?",
+      opts: ["public", "protected", "private", "default (sem modificador)"], correct: 2,
+      explain: "private restringe o acesso à própria classe — nem outras classes do mesmo pacote conseguem enxergar o atributo." },
+    { q: "Qual é o principal motivo de usar getters e setters, mesmo quando eles não fazem nenhuma validação?",
+      opts: ["Deixam o código mais rápido em tempo de execução", "Preservam o encapsulamento, permitindo mudar a implementação interna sem afetar quem usa a classe", "São obrigatórios pela linguagem Java", "Substituem a necessidade de construtores"], correct: 1,
+      explain: "Getters e setters criam uma camada entre o dado interno e quem usa a classe — você pode mudar como o dado é guardado sem quebrar ninguém." },
+    { q: "O que caracteriza a sobrecarga (overload) de um método?",
+      opts: ["Mesmo nome e mesma lista de parâmetros, em classes diferentes", "Mesmo nome, parâmetros diferentes, na mesma classe", "Nome diferente, mesmos parâmetros", "Uso obrigatório da anotação @Override"], correct: 1,
+      explain: "Sobrecarga acontece dentro da mesma classe: o nome do método se repete, mas a lista de parâmetros muda." },
+    { q: "Qual das alternativas descreve corretamente uma regra da sobrescrita (override)?",
+      opts: ["O método pode ter um modificador de acesso mais restritivo que o da superclasse", "O tipo de retorno deve ser sempre idêntico, nunca um subtipo", "O método deve ter a mesma assinatura (nome e parâmetros) do método da superclasse", "A sobrescrita é resolvida em tempo de compilação"], correct: 2,
+      explain: "A assinatura precisa ser idêntica. O retorno pode ser covariante, o acesso não pode ficar mais restrito, e a decisão de qual método rodar acontece em tempo de execução." },
+    { q: "Um Jogador pode continuar jogando futebol mesmo sem pertencer a um Time específico. Essa relação entre Time e Jogador é um exemplo de:",
+      opts: ["Associação simples", "Agregação", "Composição", "Sobrecarga"], correct: 1,
+      explain: "É todo-parte (o time é composto por jogadores), mas a parte sobrevive sem o todo — isso é agregação, representada pelo losango vazado." },
+    { q: "Qual símbolo UML representa a composição?",
+      opts: ["Linha simples", "Losango vazado (aberto) do lado do todo", "Losango preenchido do lado do todo", "Seta tracejada"], correct: 2,
+      explain: "O losango preenchido marca a composição: a parte não sobrevive sem o todo." },
+    { q: "Uma Casa cria seus Cômodos dentro do próprio construtor, e os cômodos deixam de existir se a casa for destruída. Essa é uma relação de:",
+      opts: ["Associação", "Agregação", "Composição", "Herança"], correct: 2,
+      explain: "A parte (Cômodo) é criada internamente pelo todo (Casa) e depende totalmente do seu ciclo de vida — isso é composição." },
+    { q: "Um atributo sem nenhum modificador de acesso (default) pode ser acessado por:",
+      opts: ["Apenas a própria classe", "A própria classe e classes do mesmo pacote", "Qualquer classe do projeto", "Apenas subclasses, mesmo em outros pacotes"], correct: 1,
+      explain: "Default (package-private) libera o acesso para toda a classe e para qualquer outra classe do mesmo pacote, mas não além disso." },
+    { q: "Qual é a diferença central entre associação e as relações de agregação/composição?",
+      opts: ["Associação é sempre bidirecional", "Associação não implica necessariamente uma relação todo-parte; agregação e composição sim", "Associação só existe entre classes abstratas", "Não existe diferença, são sinônimos"], correct: 1,
+      explain: "Associação é o termo mais genérico — dois objetos se relacionam sem que um seja necessariamente 'parte' do outro. Agregação e composição são casos específicos de relação todo-parte." },
+    { q: "Para que serve a anotação @Override?",
+      opts: ["Criar um novo método sobrecarregado", "Indicar ao compilador que o método deve, de fato, sobrescrever um método da superclasse, gerando erro se a assinatura não bater", "Tornar o método privado", "Impedir que a subclasse herde o método"], correct: 1,
+      explain: "@Override não é obrigatória, mas faz o compilador checar a assinatura — se você errar um parâmetro, o erro aparece na hora em vez de virar um bug silencioso." },
+    { q: "Em uma sobrescrita válida, o tipo de retorno do método na subclasse pode ser:",
+      opts: ["Qualquer tipo, sem relação com o original", "O mesmo tipo, ou um subtipo dele (retorno covariante)", "Sempre void", "Um supertipo do retorno original"], correct: 1,
+      explain: "Java aceita retorno covariante: a subclasse pode devolver um tipo mais específico que o da superclasse, nunca mais genérico." },
+    { q: "Qual é a convenção de nome para o getter de um atributo booleano chamado \"ativo\"?",
+      opts: ["getAtivo()", "isAtivo()", "ativoGet()", "activeGet()"], correct: 1,
+      explain: "Atributos booleanos costumam usar o prefixo is em vez de get, por convenção de legibilidade." },
+    { q: "Uma classe em Java pode estender diretamente duas outras classes ao mesmo tempo?",
+      opts: ["Sim, sempre que as duas forem abstratas", "Não — Java permite herdar de apenas uma superclasse por vez", "Sim, sem nenhuma restrição", "Só se as classes estiverem no mesmo pacote"], correct: 1,
+      explain: "Java não tem herança múltipla de classes; para comportamentos de múltiplas fontes, usa-se interfaces." },
+    { q: "Em um diagrama UML, o losango (vazado ou preenchido) é desenhado do lado de qual classe?",
+      opts: ["Do lado da \"parte\"", "Do lado do \"todo\" (quem agrega ou compõe)", "No meio da linha, sem lado definido", "Não existe losango em nenhuma dessas relações"], correct: 1,
+      explain: "O losango sempre indica quem é o todo na relação — é ele quem \"tem\" as partes." },
+    { q: "Se um método da superclasse lança uma exceção verificada (checked), o que a versão sobrescrita na subclasse pode fazer?",
+      opts: ["Lançar qualquer exceção, verificada ou não", "Lançar a mesma exceção, uma subclasse dela, ou nenhuma — nunca uma checked exception mais abrangente", "É obrigada a lançar exatamente a mesma exceção", "Não pode declarar nenhuma exceção, mesmo que a original declare"], correct: 1,
+      explain: "A subclasse pode restringir ou manter as exceções verificadas, mas nunca ampliar o que pode ser lançado em relação ao método original." },
+    { q: "Dois métodos na mesma classe têm exatamente os mesmos parâmetros, mas tipos de retorno diferentes. Isso é:",
+      opts: ["Uma sobrecarga válida", "Um erro de compilação, pois o retorno sozinho não diferencia sobrecarga", "Uma sobrescrita válida", "Permitido apenas se um dos métodos for private"], correct: 1,
+      explain: "O compilador identifica métodos pela assinatura (nome + parâmetros); o tipo de retorno sozinho não é suficiente para diferenciar duas chamadas." },
+    { q: "Qual das três relações tem o vínculo mais fraco entre os objetos envolvidos?",
+      opts: ["Composição", "Agregação", "Associação", "Todas têm a mesma força"], correct: 2,
+      explain: "Associação é a relação mais genérica e com o vínculo mais fraco; agregação e composição são formas mais específicas e fortes de relação todo-parte." },
+    { q: "Qual das alternativas abaixo é um exemplo típico de agregação?",
+      opts: ["Uma classe Carro que cria seu próprio Motor dentro do construtor", "Uma classe Time cujo construtor recebe uma List<Jogador> já existente", "Uma classe Casa que cria seus Cômodos internamente", "Um método privado chamado apenas dentro da própria classe"], correct: 1,
+      explain: "Receber a lista já pronta, de fora, é o padrão típico de agregação: a parte existe independentemente do todo." }
+  ];
+
+  var state = { i: 0, score: 0, answered: false, history: [] };
+  var app = document.getElementById('quiz-app');
+
+  function render(){
+    if (state.i >= questions.length){ renderResult(); return; }
+    var q = questions[state.i];
+    state.answered = false;
+    var pct = (state.i / questions.length) * 100;
+    app.innerHTML =
+      '<div class="qz-progress"><span>questão ' + (state.i + 1) + ' de ' + questions.length + '</span><span>pontuação: ' + state.score + '</span></div>' +
+      '<div class="qz-bar"><div class="qz-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<p class="qz-question">' + q.q + '</p>' +
+      '<div class="qz-options">' + q.opts.map(function(o, idx){
+        return '<button class="qz-opt" data-idx="' + idx + '">' + o + '</button>';
+      }).join('') + '</div>' +
+      '<div class="qz-explain" id="qz-explain">' + q.explain + '</div>' +
+      '<button class="qz-next" id="qz-next" disabled>' + (state.i === questions.length - 1 ? 'Ver resultado' : 'Próxima pergunta') + '</button>';
+
+    var buttons = app.querySelectorAll('.qz-opt');
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if (state.answered) return;
+        state.answered = true;
+        var idx = parseInt(btn.getAttribute('data-idx'), 10);
+        var isCorrect = idx === q.correct;
+        buttons.forEach(function(b, i){
+          b.disabled = true;
+          if (i === q.correct) b.classList.add('correct');
+          else if (i === idx) b.classList.add('wrong');
+        });
+        if (isCorrect) state.score++;
+        state.history.push(isCorrect);
+        document.getElementById('qz-explain').classList.add('show');
+        document.getElementById('qz-next').disabled = false;
+      });
+    });
+    document.getElementById('qz-next').addEventListener('click', function(){
+      state.i++;
+      render();
+    });
+  }
+
+  function renderResult(){
+    var dots = state.history.map(function(ok){
+      return '<div class="qz-dot ' + (ok ? 'ok' : 'bad') + '"></div>';
+    }).join('');
+    app.innerHTML =
+      '<div class="qz-result">' +
+      '<p class="score">' + state.score + ' / ' + questions.length + '</p>' +
+      '<p style="color:var(--ink-dim);">' + resultMessage(state.score, questions.length) + '</p>' +
+      '<div class="qz-breakdown">' + dots + '</div>' +
+      '<button class="qz-restart" id="qz-restart">Refazer o quiz</button>' +
+      '</div>';
+    document.getElementById('qz-restart').addEventListener('click', function(){
+      state = { i: 0, score: 0, answered: false, history: [] };
+      render();
+    });
+  }
+
+  function resultMessage(score, total){
+    var pct = score / total;
+    if (pct === 1) return "Nota máxima — os conceitos estão bem consolidados.";
+    if (pct >= 0.75) return "Boa base. Revise as questões erradas antes da prova.";
+    if (pct >= 0.5) return "Ainda dá para melhorar — releia as seções relacionadas às perguntas erradas.";
+    return "Vale a pena revisar a teoria com calma antes de tentar de novo.";
+  }
+
+  render();
+
+  // True/False block
+  var tfStatements = [
+    { text: "Um atributo protected pode ser acessado por qualquer classe do projeto.", answer: false,
+      why: "Falso. Protected libera o acesso para a classe, o pacote e subclasses — não para qualquer classe do programa." },
+    { text: "A sobrecarga (overload) é decidida em tempo de execução.", answer: false,
+      why: "Falso. Sobrecarga é resolvida em tempo de compilação, com base nos argumentos passados na chamada." },
+    { text: "A composição é representada por um losango preenchido do lado do todo.", answer: true,
+      why: "Verdadeiro. É exatamente essa a notação UML para composição." },
+    { text: "Getters e setters existem apenas por convenção de nome, sem nenhum benefício real.", answer: false,
+      why: "Falso. Eles preservam o encapsulamento e permitem validação e mudanças internas sem quebrar quem usa a classe." },
+    { text: "Em uma agregação, a parte pode existir sem o todo.", answer: true,
+      why: "Verdadeiro. É justamente essa independência que diferencia agregação de composição." },
+    { text: "A anotação @Override é obrigatória para que a sobrescrita funcione.", answer: false,
+      why: "Falso. É opcional, mas recomendada — ajuda o compilador a detectar erros de assinatura." },
+    { text: "Uma classe em Java pode herdar diretamente de mais de uma classe (herança múltipla de classes).", answer: false,
+      why: "Falso. Java permite apenas uma superclasse direta; múltiplos comportamentos vêm de interfaces." },
+    { text: "Associação é sempre uma relação do tipo todo-parte.", answer: false,
+      why: "Falso. Associação é o termo mais genérico e não implica necessariamente todo-parte — isso é específico de agregação e composição." }
+  ];
+
+  var tfApp = document.getElementById('tf-app');
+  tfApp.innerHTML = tfStatements.map(function(item, i){
+    return '<div class="tf-item">' +
+      '<p>' + item.text + '</p>' +
+      '<button class="tf-toggle" data-i="' + i + '">ver resposta</button>' +
+      '</div>';
+  }).join('');
+  tfApp.querySelectorAll('.tf-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var item = tfStatements[parseInt(btn.getAttribute('data-i'), 10)];
+      btn.classList.add('on', item.answer ? 'true' : 'false');
+      btn.textContent = item.answer ? 'Verdadeiro' : 'Falso';
+      btn.title = item.why;
+      var p = btn.parentElement.querySelector('p');
+      if (!p.dataset.expanded){
+        p.dataset.expanded = '1';
+        p.insertAdjacentHTML('afterend', '');
+      }
+      var existingWhy = btn.parentElement.querySelector('.tf-why');
+      if (!existingWhy){
+        var whyEl = document.createElement('p');
+        whyEl.className = 'tf-why';
+        whyEl.style.cssText = 'flex-basis:100%; margin:8px 0 0; font-size:0.85rem; color:var(--ink-faint);';
+        whyEl.textContent = item.why;
+        btn.parentElement.appendChild(whyEl);
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
